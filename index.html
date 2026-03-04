@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Éditeur JavaScript avec Console</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            height: calc(100vh - 100px);
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        textarea {
+            flex: 1;
+            resize: none;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 12px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            background-color: #2563eb;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #1e40af;
+        }
+
+        .console {
+            flex: 1;
+            background-color: black;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .empty {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Éditeur JavaScript avec Console</h1>
+
+<div class="container">
+    <div class="panel">
+        <textarea id="code">
+// Utilise la fonction afficher()
+let message = "Bonjour le monde";
+afficher(message);
+
+let age = 17;
+afficher("Tu as", age, "ans");
+        </textarea>
+        <button onclick="runCode()">Lancer le code</button>
+    </div>
+
+    <div class="panel">
+        <div id="console" class="console">
+            <div class="empty">Console vide...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function runCode() {
+        const consoleDiv = document.getElementById("console");
+        const code = document.getElementById("code").value;
+
+        consoleDiv.innerHTML = "";
+
+        // Fonction personnalisée similaire à console.log
+        function afficher(...args) {
+            const line = args.map(arg => {
+                if (typeof arg === "object") {
+                    return JSON.stringify(arg, null, 2);
+                }
+                return String(arg);
+            }).join(" ");
+
+            const div = document.createElement("div");
+            div.textContent = line;
+            consoleDiv.appendChild(div);
+        }
+
+        try {
+            const userFunction = new Function("afficher", code);
+            userFunction(afficher);
+        } catch (error) {
+            const errorDiv = document.createElement("div");
+            errorDiv.textContent = "Erreur : " + error.message;
+            errorDiv.style.color = "red";
+            consoleDiv.appendChild(errorDiv);
+        }
+    }
+</script>
+
+</body>
+</html>
