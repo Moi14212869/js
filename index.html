@@ -100,7 +100,7 @@
         consoleDiv.innerHTML = "";
 
         // Fonction personnalisée similaire à console.log
-        function afficher(...args) {
+        function aff(...args) {
             const line = args.map(arg => {
                 if (typeof arg === "object") {
                     return JSON.stringify(arg, null, 2);
