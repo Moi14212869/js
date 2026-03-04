@@ -3,10 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <title>Éditeur JavaScript</title>
-
-<!-- PrismJS CSS -->
 <link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css" rel="stylesheet" />
-
+<link rel="icon" href="favicon.ico" type="image/x-icon">
 <style>
 * { box-sizing: border-box; }
 
@@ -35,31 +33,47 @@ h1 {
     flex-direction: column;
 }
 
-/* Zone éditeur */
+/* === EDITEUR === */
+
 .editor {
+    position: relative;
     flex: 1;
     border-radius: 10px;
     overflow: hidden;
     border: 1px solid #ccc;
+    background: #2d2d2d;
 }
 
-/* On cache le textarea mais on le garde pour l'édition */
+/* textarea au-dessus */
 textarea {
     position: absolute;
-    opacity: 0;
-    pointer-events: none;
+    inset: 0;
+    resize: none;
+    padding: 15px;
+    font-family: monospace;
+    font-size: 14px;
+    background: transparent;
+    color: transparent;
+    caret-color: white;
+    border: none;
+    outline: none;
+    z-index: 2;
+    white-space: pre;
+    overflow: auto;
 }
 
-/* Prism */
+/* Prism en dessous */
 pre {
     margin: 0;
     height: 100%;
     padding: 15px;
     overflow: auto;
     font-size: 14px;
+    pointer-events: none;
 }
 
-/* Bouton */
+/* === BOUTON === */
+
 button {
     margin-top: 10px;
     padding: 12px;
@@ -75,7 +89,8 @@ button:hover {
     background-color: #1e40af;
 }
 
-/* Console */
+/* === CONSOLE === */
+
 .console {
     flex: 1;
     background-color: black;
@@ -88,7 +103,9 @@ button:hover {
     text-shadow: 0 0 5px #00ff00;
 }
 
-.empty { opacity: 0.5; }
+.empty {
+    opacity: 0.5;
+}
 </style>
 </head>
 
@@ -114,14 +131,16 @@ button:hover {
 
 </div>
 
-<!-- PrismJS -->
+<!-- PrismJS Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-javascript.min.js"></script>
 
 <script>
 const textarea = document.getElementById("code");
 const highlight = document.getElementById("highlight");
+const consoleDiv = document.getElementById("console");
 
+/* === Colorisation === */
 function updateHighlight() {
     highlight.textContent = textarea.value;
     Prism.highlightElement(highlight);
@@ -129,26 +148,26 @@ function updateHighlight() {
 
 textarea.addEventListener("input", updateHighlight);
 
-// Lancer avec Ctrl+Entrée
+/* Synchronisation scroll */
+textarea.addEventListener("scroll", () => {
+    highlight.parentElement.scrollTop = textarea.scrollTop;
+});
+
+/* Lancer avec Ctrl+Entrée */
 textarea.addEventListener("keydown", function(e) {
     if (e.ctrlKey && e.key === "Enter") {
         runCode();
     }
 });
 
-// Synchronisation scroll
-textarea.addEventListener("scroll", () => {
-    highlight.parentElement.scrollTop = textarea.scrollTop;
-});
-
-// Code par défaut
+/* Code par défaut */
 textarea.value = `console.log("Bonjour !");
 console.log({nom: "Alex", age: 15});`;
+
 updateHighlight();
 
+/* === Exécution === */
 function runCode() {
-    const consoleDiv = document.getElementById("console");
-    const code = textarea.value;
 
     consoleDiv.innerHTML = "";
 
@@ -166,8 +185,8 @@ function runCode() {
     }
 
     try {
-        // Remplacement automatique de console.log
-        const userFunction = new Function("console", code);
+        const userFunction = new Function("console", textarea.value);
+
         userFunction({
             log: aff
         });
