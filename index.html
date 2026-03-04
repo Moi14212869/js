@@ -90,9 +90,7 @@ button:hover {
 require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.41.0/min/vs' }});
 require(['vs/editor/editor.main'], function () {
     window.editor = monaco.editor.create(document.getElementById('editorContainer'), {
-        value: `// Exemple avec input
-let name = input("Quel est ton prénom ?");
-console.log("Bonjour " + name);`,
+        value: `console.log("Bonjour le monde !");`,
         language: 'javascript',
         theme: 'vs-dark',
         automaticLayout: true,
@@ -108,7 +106,7 @@ const consoleDiv = document.getElementById("console");
 function runCode() {
     consoleDiv.innerHTML = "";
 
-    // Redirige console.log
+    // Redirige console.log vers notre console
     function aff(...args) {
         const line = args.map(arg => typeof arg === "object" ? JSON.stringify(arg, null, 2) : String(arg)).join(" ");
         const div = document.createElement("div");
@@ -117,35 +115,10 @@ function runCode() {
         consoleDiv.scrollTop = consoleDiv.scrollHeight;
     }
 
-    // Fonction input interactive dans la console
-    function input(message) {
-        return new Promise(resolve => {
-            const promptDiv = document.createElement("div");
-            promptDiv.textContent = message || "";
-            consoleDiv.appendChild(promptDiv);
-
-            const inputField = document.createElement("input");
-            consoleDiv.appendChild(inputField);
-            inputField.focus();
-
-            inputField.addEventListener("keydown", function(e) {
-                if (e.key === "Enter") {
-                    const value = inputField.value;
-                    consoleDiv.removeChild(inputField);
-                    const echo = document.createElement("div");
-                    echo.textContent = value;
-                    consoleDiv.appendChild(echo);
-                    consoleDiv.scrollTop = consoleDiv.scrollHeight;
-                    resolve(value);
-                }
-            });
-        });
-    }
-
     try {
-        const userFunction = new Function("console", "input", editor.getValue());
-        // Exécute la fonction async pour gérer les inputs
-        (async () => { await userFunction({ log: aff }, input); })();
+        // Création d'une fonction avec seulement console
+        const userFunction = new Function("console", editor.getValue());
+        userFunction({ log: aff });
 
     } catch (err) {
         const errorDiv = document.createElement("div");
