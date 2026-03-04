@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Éditeur JavaScript avec Console</title>
+    <title>Éditeur JavaScript</title>
     <style>
         * {
             box-sizing: border-box;
@@ -76,17 +76,11 @@
 </head>
 <body>
 
-<h1>Éditeur JavaScript avec Console</h1>
+<h1>Éditeur JavaScript</h1>
 
 <div class="container">
     <div class="panel">
         <textarea id="code">
-// Utilise la fonction afficher()
-let message = "Bonjour le monde";
-afficher(message);
-
-let age = 17;
-afficher("Tu as", age, "ans");
         </textarea>
         <button onclick="runCode()">Lancer le code</button>
     </div>
@@ -120,8 +114,8 @@ afficher("Tu as", age, "ans");
         }
 
         try {
-            const userFunction = new Function("afficher", code);
-            userFunction(afficher);
+            const userFunction = new Function("aff", code);
+            userFunction(aff);
         } catch (error) {
             const errorDiv = document.createElement("div");
             errorDiv.textContent = "Erreur : " + error.message;
