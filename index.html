@@ -1,128 +1,188 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Éditeur JavaScript</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<title>Éditeur JavaScript</title>
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-        }
+<!-- PrismJS CSS -->
+<link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css" rel="stylesheet" />
 
-        h1 {
-            text-align: center;
-            padding: 20px;
-            margin: 0;
-        }
+<style>
+* { box-sizing: border-box; }
 
-        .container {
-            display: flex;
-            gap: 20px;
-            padding: 20px;
-            height: calc(100vh - 100px);
-        }
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+}
 
-        .panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
+h1 {
+    text-align: center;
+    padding: 20px;
+    margin: 0;
+}
 
-        textarea {
-            flex: 1;
-            resize: none;
-            padding: 15px;
-            font-family: monospace;
-            font-size: 14px;
-            border-radius: 10px;
-            border: 1px solid #ccc;
-        }
+.container {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    height: calc(100vh - 100px);
+}
 
-        button {
-            margin-top: 10px;
-            padding: 12px;
-            font-size: 16px;
-            border: none;
-            border-radius: 10px;
-            background-color: #2563eb;
-            color: white;
-            cursor: pointer;
-        }
+.panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
 
-        button:hover {
-            background-color: #1e40af;
-        }
+/* Zone éditeur */
+.editor {
+    flex: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #ccc;
+}
 
-        .console {
-            flex: 1;
-            background-color: black;
-            color: #00ff00;
-            padding: 15px;
-            border-radius: 10px;
-            font-family: monospace;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
+/* On cache le textarea mais on le garde pour l'édition */
+textarea {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
 
-        .empty {
-            opacity: 0.5;
-        }
-    </style>
+/* Prism */
+pre {
+    margin: 0;
+    height: 100%;
+    padding: 15px;
+    overflow: auto;
+    font-size: 14px;
+}
+
+/* Bouton */
+button {
+    margin-top: 10px;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 10px;
+    background-color: #2563eb;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #1e40af;
+}
+
+/* Console */
+.console {
+    flex: 1;
+    background-color: black;
+    color: #00ff00;
+    padding: 15px;
+    border-radius: 10px;
+    font-family: monospace;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    text-shadow: 0 0 5px #00ff00;
+}
+
+.empty { opacity: 0.5; }
+</style>
 </head>
+
 <body>
 
 <h1>Éditeur JavaScript</h1>
 
 <div class="container">
-    <div class="panel">
-        <textarea id="code">
-        </textarea>
-        <button onclick="runCode()">Lancer le code</button>
-    </div>
 
-    <div class="panel">
-        <div id="console" class="console">
-            <div class="empty">Console vide...</div>
-        </div>
+<div class="panel">
+    <div class="editor">
+        <pre><code id="highlight" class="language-javascript"></code></pre>
+        <textarea id="code"></textarea>
+    </div>
+    <button onclick="runCode()">Lancer le code (Ctrl + Entrée)</button>
+</div>
+
+<div class="panel">
+    <div id="console" class="console">
+        <div class="empty">Console vide...</div>
     </div>
 </div>
 
+</div>
+
+<!-- PrismJS -->
+<script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-javascript.min.js"></script>
+
 <script>
-    function runCode() {
-        const consoleDiv = document.getElementById("console");
-        const code = document.getElementById("code").value;
+const textarea = document.getElementById("code");
+const highlight = document.getElementById("highlight");
 
-        consoleDiv.innerHTML = "";
+function updateHighlight() {
+    highlight.textContent = textarea.value;
+    Prism.highlightElement(highlight);
+}
 
-        // Fonction personnalisée similaire à console.log
-        function aff(...args) {
-            const line = args.map(arg => {
-                if (typeof arg === "object") {
-                    return JSON.stringify(arg, null, 2);
-                }
-                return String(arg);
-            }).join(" ");
+textarea.addEventListener("input", updateHighlight);
 
-            const div = document.createElement("div");
-            div.textContent = line;
-            consoleDiv.appendChild(div);
-        }
-
-        try {
-            const userFunction = new Function("aff", code);
-            userFunction(aff);
-        } catch (error) {
-            const errorDiv = document.createElement("div");
-            errorDiv.textContent = "Erreur : " + error.message;
-            errorDiv.style.color = "red";
-            consoleDiv.appendChild(errorDiv);
-        }
+// Lancer avec Ctrl+Entrée
+textarea.addEventListener("keydown", function(e) {
+    if (e.ctrlKey && e.key === "Enter") {
+        runCode();
     }
+});
+
+// Synchronisation scroll
+textarea.addEventListener("scroll", () => {
+    highlight.parentElement.scrollTop = textarea.scrollTop;
+});
+
+// Code par défaut
+textarea.value = `console.log("Bonjour !");
+console.log({nom: "Alex", age: 15});`;
+updateHighlight();
+
+function runCode() {
+    const consoleDiv = document.getElementById("console");
+    const code = textarea.value;
+
+    consoleDiv.innerHTML = "";
+
+    function aff(...args) {
+        const line = args.map(arg => {
+            if (typeof arg === "object") {
+                return JSON.stringify(arg, null, 2);
+            }
+            return String(arg);
+        }).join(" ");
+
+        const div = document.createElement("div");
+        div.textContent = line;
+        consoleDiv.appendChild(div);
+    }
+
+    try {
+        // Remplacement automatique de console.log
+        const userFunction = new Function("console", code);
+        userFunction({
+            log: aff
+        });
+
+        if (consoleDiv.innerHTML === "") {
+            consoleDiv.innerHTML = '<div class="empty">Aucune sortie</div>';
+        }
+
+    } catch (error) {
+        const errorDiv = document.createElement("div");
+        errorDiv.textContent = "Erreur : " + error.message;
+        errorDiv.style.color = "red";
+        consoleDiv.appendChild(errorDiv);
+    }
+}
 </script>
 
 </body>
