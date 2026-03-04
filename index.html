@@ -2,202 +2,106 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Éditeur JavaScript</title>
-<link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css" rel="stylesheet" />
 <link rel="icon" href="favicon.ico" type="image/x-icon">
-<style>
-* { box-sizing: border-box; }
+<title>Éditeur JS avec Monaco</title>
 
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.41.0/min/vs/loader.js"></script>
+
+<style>
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
 h1 {
     text-align: center;
-    padding: 20px;
-    margin: 0;
-}
-
-.container {
-    display: flex;
-    gap: 20px;
-    padding: 20px;
-    height: calc(100vh - 100px);
-}
-
-.panel {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-/* === EDITEUR === */
-
-.editor {
-    position: relative;
-    flex: 1;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid #ccc;
-    background: #2d2d2d;
-}
-
-/* textarea au-dessus */
-textarea {
-    position: absolute;
-    inset: 0;
-    resize: none;
     padding: 15px;
-    font-family: monospace;
-    font-size: 14px;
-    background: transparent;
-    color: transparent;
-    caret-color: white;
-    border: none;
-    outline: none;
-    z-index: 2;
-    white-space: pre;
-    overflow: auto;
-}
-
-/* Prism en dessous */
-pre {
     margin: 0;
-    height: 100%;
-    padding: 15px;
-    overflow: auto;
-    font-size: 14px;
-    pointer-events: none;
-}
-
-/* === BOUTON === */
-
-button {
-    margin-top: 10px;
-    padding: 12px;
-    font-size: 16px;
-    border: none;
-    border-radius: 10px;
     background-color: #2563eb;
     color: white;
-    cursor: pointer;
 }
 
-button:hover {
-    background-color: #1e40af;
-}
-
-/* === CONSOLE === */
-
-.console {
+#editorContainer {
     flex: 1;
+}
+
+#console {
+    height: 150px;
     background-color: black;
     color: #00ff00;
-    padding: 15px;
-    border-radius: 10px;
     font-family: monospace;
+    padding: 10px;
     overflow-y: auto;
     white-space: pre-wrap;
     text-shadow: 0 0 5px #00ff00;
 }
-
-.empty {
-    opacity: 0.5;
+button {
+    padding: 10px 20px;
+    margin: 5px 20px;
+    border: none;
+    border-radius: 8px;
+    background-color: #2563eb;
+    color: white;
+    cursor: pointer;
+}
+button:hover {
+    background-color: #1e40af;
 }
 </style>
 </head>
-
 <body>
 
-<h1>Éditeur JavaScript</h1>
+<h1>Éditeur JavaScript Pro</h1>
 
-<div class="container">
-
-<div class="panel">
-    <div class="editor">
-        <pre><code id="highlight" class="language-javascript"></code></pre>
-        <textarea id="code"></textarea>
-    </div>
-    <button onclick="runCode()">Lancer le code (Ctrl + Entrée)</button>
-</div>
-
-<div class="panel">
-    <div id="console" class="console">
-        <div class="empty">Console vide...</div>
-    </div>
-</div>
-
-</div>
-
-<!-- PrismJS Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-javascript.min.js"></script>
+<div id="editorContainer"></div>
+<button onclick="runCode()">Lancer le code (Ctrl+Entrée)</button>
+<div id="console"><div class="empty">Console vide...</div></div>
 
 <script>
-const textarea = document.getElementById("code");
-const highlight = document.getElementById("highlight");
+require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.41.0/min/vs' }});
+require(['vs/editor/editor.main'], function () {
+    window.editor = monaco.editor.create(document.getElementById('editorContainer'), {
+        value: `console.log("Bonjour !");
+console.log({nom: "Alex", age: 15});`,
+        language: 'javascript',
+        theme: 'vs-dark',
+        automaticLayout: true,
+        minimap: { enabled: false }
+    });
+
+    // Lancer code avec Ctrl + Entrée
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, runCode);
+});
+
 const consoleDiv = document.getElementById("console");
 
-/* === Colorisation === */
-function updateHighlight() {
-    highlight.textContent = textarea.value;
-    Prism.highlightElement(highlight);
-}
-
-textarea.addEventListener("input", updateHighlight);
-
-/* Synchronisation scroll */
-textarea.addEventListener("scroll", () => {
-    highlight.parentElement.scrollTop = textarea.scrollTop;
-});
-
-/* Lancer avec Ctrl+Entrée */
-textarea.addEventListener("keydown", function(e) {
-    if (e.ctrlKey && e.key === "Enter") {
-        runCode();
-    }
-});
-
-/* Code par défaut */
-textarea.value = `console.log("Bonjour !");
-console.log({nom: "Alex", age: 15});`;
-
-updateHighlight();
-
-/* === Exécution === */
 function runCode() {
-
     consoleDiv.innerHTML = "";
 
+    // Redirige console.log
     function aff(...args) {
         const line = args.map(arg => {
-            if (typeof arg === "object") {
-                return JSON.stringify(arg, null, 2);
-            }
+            if (typeof arg === "object") return JSON.stringify(arg, null, 2);
             return String(arg);
         }).join(" ");
-
         const div = document.createElement("div");
         div.textContent = line;
         consoleDiv.appendChild(div);
     }
 
     try {
-        const userFunction = new Function("console", textarea.value);
-
-        userFunction({
-            log: aff
-        });
+        const userFunction = new Function("console", window.editor.getValue());
+        userFunction({ log: aff });
 
         if (consoleDiv.innerHTML === "") {
             consoleDiv.innerHTML = '<div class="empty">Aucune sortie</div>';
         }
-
-    } catch (error) {
+    } catch (err) {
         const errorDiv = document.createElement("div");
-        errorDiv.textContent = "Erreur : " + error.message;
+        errorDiv.textContent = "Erreur : " + err.message;
         errorDiv.style.color = "red";
         consoleDiv.appendChild(errorDiv);
     }
