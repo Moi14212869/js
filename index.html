@@ -2,18 +2,17 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<title>Éditeur JS avec Monaco et console interactive</title>
 <link rel="icon" href="favicon.ico" type="image/x-icon">
-<title>Éditeur JS avec Monaco</title>
-
 <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.41.0/min/vs/loader.js"></script>
 
 <style>
 body {
     margin: 0;
     font-family: Arial, sans-serif;
+    height: 100vh;
     display: flex;
     flex-direction: column;
-    height: 100vh;
 }
 
 h1 {
@@ -24,12 +23,14 @@ h1 {
     color: white;
 }
 
-#editorContainer {
+.container {
     flex: 1;
+    display: flex;
+    gap: 10px;
 }
 
 #console {
-    height: 150px;
+    width: 40%;
     background-color: black;
     color: #00ff00;
     font-family: monospace;
@@ -37,18 +38,40 @@ h1 {
     overflow-y: auto;
     white-space: pre-wrap;
     text-shadow: 0 0 5px #00ff00;
+    border-radius: 10px;
 }
+
+#console input {
+    background: black;
+    color: #00ff00;
+    border: none;
+    outline: none;
+    font-family: monospace;
+    font-size: 14px;
+    width: 95%;
+}
+
+#editorContainer {
+    width: 60%;
+    border-radius: 10px;
+}
+
 button {
     padding: 10px 20px;
-    margin: 5px 20px;
+    margin: 10px 20px;
     border: none;
     border-radius: 8px;
     background-color: #2563eb;
     color: white;
     cursor: pointer;
 }
+
 button:hover {
     background-color: #1e40af;
+}
+
+.empty {
+    opacity: 0.5;
 }
 </style>
 </head>
@@ -56,23 +79,27 @@ button:hover {
 
 <h1>Éditeur JavaScript Pro</h1>
 
-<div id="editorContainer"></div>
+<div class="container">
+    <div id="console"><div class="empty">Console vide...</div></div>
+    <div id="editorContainer"></div>
+</div>
+
 <button onclick="runCode()">Lancer le code (Ctrl+Entrée)</button>
-<div id="console"><div class="empty">Console vide...</div></div>
 
 <script>
 require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.41.0/min/vs' }});
 require(['vs/editor/editor.main'], function () {
     window.editor = monaco.editor.create(document.getElementById('editorContainer'), {
-        value: `console.log("Bonjour !");
-console.log({nom: "Alex", age: 15});`,
+        value: `// Exemple avec input
+let name = input("Quel est ton prénom ?");
+console.log("Bonjour " + name);`,
         language: 'javascript',
         theme: 'vs-dark',
         automaticLayout: true,
         minimap: { enabled: false }
     });
 
-    // Lancer code avec Ctrl + Entrée
+    // Ctrl+Entrée pour exécuter
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, runCode);
 });
 
@@ -83,22 +110,43 @@ function runCode() {
 
     // Redirige console.log
     function aff(...args) {
-        const line = args.map(arg => {
-            if (typeof arg === "object") return JSON.stringify(arg, null, 2);
-            return String(arg);
-        }).join(" ");
+        const line = args.map(arg => typeof arg === "object" ? JSON.stringify(arg, null, 2) : String(arg)).join(" ");
         const div = document.createElement("div");
         div.textContent = line;
         consoleDiv.appendChild(div);
+        consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    }
+
+    // Fonction input interactive dans la console
+    function input(message) {
+        return new Promise(resolve => {
+            const promptDiv = document.createElement("div");
+            promptDiv.textContent = message || "";
+            consoleDiv.appendChild(promptDiv);
+
+            const inputField = document.createElement("input");
+            consoleDiv.appendChild(inputField);
+            inputField.focus();
+
+            inputField.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") {
+                    const value = inputField.value;
+                    consoleDiv.removeChild(inputField);
+                    const echo = document.createElement("div");
+                    echo.textContent = value;
+                    consoleDiv.appendChild(echo);
+                    consoleDiv.scrollTop = consoleDiv.scrollHeight;
+                    resolve(value);
+                }
+            });
+        });
     }
 
     try {
-        const userFunction = new Function("console", window.editor.getValue());
-        userFunction({ log: aff });
+        const userFunction = new Function("console", "input", editor.getValue());
+        // Exécute la fonction async pour gérer les inputs
+        (async () => { await userFunction({ log: aff }, input); })();
 
-        if (consoleDiv.innerHTML === "") {
-            consoleDiv.innerHTML = '<div class="empty">Aucune sortie</div>';
-        }
     } catch (err) {
         const errorDiv = document.createElement("div");
         errorDiv.textContent = "Erreur : " + err.message;
