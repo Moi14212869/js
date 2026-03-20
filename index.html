@@ -48,7 +48,7 @@ h1 {
 
 button {
     padding: 10px 20px;
-    margin: 10px 20px;
+    margin: 10px 10px;
     border: none;
     border-radius: 8px;
     background-color: #2563eb;
@@ -63,6 +63,12 @@ button:hover {
 .empty {
     opacity: 0.5;
 }
+
+.separator {
+    margin: 10px 0;
+    border-top: 1px solid #00ff00;
+    opacity: 0.5;
+}
 </style>
 </head>
 <body>
@@ -74,21 +80,25 @@ button:hover {
     <div id="editorContainer"></div>
 </div>
 
-<button onclick="runCode()">Lancer le code (Ctrl+Entrée)</button>
+<div>
+    <button onclick="runCode()">Lancer le code (Ctrl+Entrée)</button>
+    <button onclick="resetConsole()">Reset console</button>
+</div>
 
 <script>
 require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.41.0/min/vs' }});
+
 let score = parseInt(localStorage.getItem("score")) || 0;
+
 require(['vs/editor/editor.main'], function () {
     window.editor = monaco.editor.create(document.getElementById('editorContainer'), {
-        value: `console.log("Hello World !")`,
+        value: `console.log("Hello World !");`,
         language: 'javascript',
         theme: 'vs-dark',
         automaticLayout: true,
         minimap: { enabled: false }
     });
 
-    // Ctrl+Entrée pour exécuter
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, runCode);
 });
 
@@ -97,12 +107,23 @@ const consoleDiv = document.getElementById("console");
 function runCode() {
     score = score + 10;
     localStorage.setItem("score", score);
-    consoleDiv.innerHTML = "";
 
-    // Affichage console.log personnalisé
+    // Ajouter un séparateur entre les exécutions
+    if (consoleDiv.innerHTML.trim() !== "" && !consoleDiv.querySelector(".empty")) {
+        const sep = document.createElement("div");
+        sep.className = "separator";
+        consoleDiv.appendChild(sep);
+    } else {
+        consoleDiv.innerHTML = "";
+    }
+
     const originalConsoleLog = console.log;
+
     console.log = function(...args) {
-        const line = args.map(arg => typeof arg === "object" ? JSON.stringify(arg, null, 2) : String(arg)).join(" ");
+        const line = args.map(arg => 
+            typeof arg === "object" ? JSON.stringify(arg, null, 2) : String(arg)
+        ).join(" ");
+
         const div = document.createElement("div");
         div.textContent = line;
         consoleDiv.appendChild(div);
@@ -117,9 +138,12 @@ function runCode() {
         errorDiv.style.color = "red";
         consoleDiv.appendChild(errorDiv);
     } finally {
-        // Restaurer console.log
         console.log = originalConsoleLog;
     }
+}
+
+function resetConsole() {
+    consoleDiv.innerHTML = '<div class="empty">Console vide...</div>';
 }
 </script>
 
